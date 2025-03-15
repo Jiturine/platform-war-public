@@ -104,7 +104,7 @@ class Chat:
         self.client = OpenAI(api_key=API_KEY, base_url=API_BASE_URL)
 
         # 初始化时创建prompt缓存
-        self._initialize_prompt_cache()
+        # self._initialize_prompt_cache()
 
         platform = character_name.lower()
         if platform in PLATFORM_KNOWLEDGE_BASE:
@@ -120,59 +120,59 @@ class Chat:
         if DEBUG_MODE:
             print(*args, **kwargs)
 
-    def _initialize_prompt_cache(self):
-        """初始化prompt缓存
+    # def _initialize_prompt_cache(self):
+    #     """初始化prompt缓存
 
-        读取generate_query.txt文件内容并创建缓存，用于后续查询时复用。
-        缓存的TTL设置为300秒（5分钟），使用tag 'generate_query_prompt'标识。
-        如果缓存创建失败会打印错误信息但不会中断程序运行。
-        """
-        try:
-            # 1. 读取prompt文件内容
-            with open(GENERATE_QUERY_PROMPT, "r", encoding="utf-8") as f:
-                prompt_content = f.read()
+    #     读取generate_query.txt文件内容并创建缓存，用于后续查询时复用。
+    #     缓存的TTL设置为300秒（5分钟），使用tag 'generate_query_prompt'标识。
+    #     如果缓存创建失败会打印错误信息但不会中断程序运行。
+    #     """
+    #     try:
+    #         # 1. 读取prompt文件内容
+    #         with open(GENERATE_QUERY_PROMPT, "r", encoding="utf-8") as f:
+    #             prompt_content = f.read()
 
-            # 2. 设置缓存URL - 确保没有重复的斜杠
-            base_url = str(self.client.base_url).rstrip("/")
-            cache_url = f"{base_url}/caching"
+    #         # 2. 设置缓存URL - 确保没有重复的斜杠
+    #         base_url = str(self.client.base_url).rstrip("/")
+    #         cache_url = f"{base_url}/caching"
 
-            # 3. 准备请求头
-            headers = {
-                "Authorization": f"Bearer {self.client.api_key}",
-                "Content-Type": "application/json",
-            }
+    #         # 3. 准备请求头
+    #         headers = {
+    #             "Authorization": f"Bearer {self.client.api_key}",
+    #             "Content-Type": "application/json",
+    #         }
 
-            # 4. 准备请求体
-            payload = {
-                "model": "moonshot-v1",
-                "messages": [{"role": "system", "content": prompt_content}],
-                "ttl": 300,  # 缓存5分钟
-                "tags": ["generate_query_prompt"],
-            }
+    #         # 4. 准备请求体
+    #         payload = {
+    #             "model": "moonshot-v1",
+    #             "messages": [{"role": "system", "content": prompt_content}],
+    #             "ttl": 300,  # 缓存5分钟
+    #             "tags": ["generate_query_prompt"],
+    #         }
 
-            # 5. 发送创建缓存请求
-            cache_response = httpx.post(
-                cache_url, headers=headers, json=payload, timeout=10.0  # 设置10秒超时
-            )
+    #         # 5. 发送创建缓存请求
+    #         cache_response = httpx.post(
+    #             cache_url, headers=headers, json=payload, timeout=10.0  # 设置10秒超时
+    #         )
 
-            # 6. 检查响应状态
-            if cache_response.status_code != 200:
-                error_msg = cache_response.text
-                raise Exception(
-                    f"创建缓存失败，状态码: {cache_response.status_code}, 错误信息: {error_msg}"
-                )
+    #         # 6. 检查响应状态
+    #         if cache_response.status_code != 200:
+    #             error_msg = cache_response.text
+    #             raise Exception(
+    #                 f"创建缓存失败，状态码: {cache_response.status_code}, 错误信息: {error_msg}"
+    #             )
 
-            if self._debug_print:
-                self._debug_print(f"[Debug] Prompt缓存初始化成功")
+    #         if self._debug_print:
+    #             self._debug_print(f"[Debug] Prompt缓存初始化成功")
 
-        except FileNotFoundError:
-            print(f"Prompt文件未找到: {GENERATE_QUERY_PROMPT}")
-        except httpx.RequestError as e:
-            print(f"发送缓存请求失败: {str(e)}")
-        except json.JSONDecodeError as e:
-            print(f"JSON解析错误: {str(e)}")
-        except Exception as e:
-            print(f"初始化prompt缓存失败: {str(e)}")
+    #     except FileNotFoundError:
+    #         print(f"Prompt文件未找到: {GENERATE_QUERY_PROMPT}")
+    #     except httpx.RequestError as e:
+    #         print(f"发送缓存请求失败: {str(e)}")
+    #     except json.JSONDecodeError as e:
+    #         print(f"JSON解析错误: {str(e)}")
+    #     except Exception as e:
+    #         print(f"初始化prompt缓存失败: {str(e)}")
 
     def _get_mode_specific_prompt(self, mode: RetrievalMode) -> str:
         """根据检索模式获取特定的系统提示词"""
@@ -192,10 +192,14 @@ class Chat:
         history_str = self.context.format_history()
         strategy_info = self.context.get_strategy_info()
 
+        with open(GENERATE_QUERY_PROMPT, "r", encoding="utf-8") as f:
+            prompt_content = f.read()
+
         # 使用缓存的prompt
         messages = [
             # 使用缓存的system prompt
-            {"role": "cache", "content": "tag=generate_query_prompt;reset_ttl=300"},
+            # {"role": "cache", "content": "tag=generate_query_prompt;reset_ttl=300"},
+            {"role": "system", "content": prompt_content},
             {
                 "role": "user",
                 "content": f"你代表的平台是：{PLATFORM_NAME[self.character_name.lower()]}\n"
@@ -209,10 +213,10 @@ class Chat:
             self._debug_print(f"查询信息: {messages[-1]['content']}")
 
         response = self.client.chat.completions.create(
-            model="moonshot-v1-8k",
+            model="deepseek-chat",
             messages=messages,
-            temperature=0.5,
-            response_format={"type": "json_object"},
+            temperature=1.5,
+            response_format={"type":"json_object"},
         )
 
         reply = response.choices[0].message.content
@@ -242,9 +246,9 @@ class Chat:
             ]
 
             response = self.client.chat.completions.create(
-                model="moonshot-v1-auto",
+                model="deepseek-chat",
                 messages=messages,
-                temperature=0.7,
+                temperature=1.5,
                 stream=True,
             )
 

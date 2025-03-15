@@ -11,8 +11,8 @@ class EmbeddingModel:
         if cls._instance is None:
             print("初始化嵌入模型...")
             cls._instance = HuggingFaceBgeEmbeddings(
-                model_name="BAAI/bge-m3",
-                model_kwargs={"device": "cuda"},
+                model_name="./bge-m3",
+                model_kwargs={"device": "cpu", "trust_remote_code": True},
                 encode_kwargs={"normalize_embeddings": True},
                 query_instruction="",
             )

@@ -369,7 +369,7 @@ class GraphEntity:
             messages = [{"role": "user", "content": prompt}]
 
             response = self.llm_client.chat.completions.create(
-                model="moonshot-v1-8k", messages=messages, temperature=0.5
+                model="deepseek-chat", messages=messages, temperature=1.5
             )
 
             return response.choices[0].message.content.strip()
@@ -388,7 +388,7 @@ class GraphEntity:
             messages = [{"role": "user", "content": prompt}]
 
             response = self.llm_client.chat.completions.create(
-                model="moonshot-v1-8k", messages=messages, temperature=0.5
+                model="deepseek-chat", messages=messages, temperature=1.5
             )
 
             result = response.choices[0].message.content.strip().lower()
@@ -713,9 +713,9 @@ class GraphEntity:
 
             # 5. 生成摘要
             response = self.llm_client.chat.completions.create(
-                model="moonshot-v1-auto",
+                model="deepseek-chat",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.5,
+                temperature=1.5,
             )
 
             return response.choices[0].message.content.strip().replace("\n", " ")

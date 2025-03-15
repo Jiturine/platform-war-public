@@ -65,9 +65,9 @@ class KnowledgeGraphExtractor:
         """与LLM交互"""
         try:
             response = client.chat.completions.create(
-                model="moonshot-v1-32k",
+                model="deepseek-chat",
                 messages=messages,
-                temperature=0.5,
+                temperature=1.5,
                 response_format={"type": "json_object"},
                 stream=True,
             )
